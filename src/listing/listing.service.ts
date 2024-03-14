@@ -199,7 +199,7 @@ export class ListingService {
 
       return reservations;
     } catch (error: any) {
-      // return error;
+      // return error; sending error here
       throw new BadRequestException(error);
     }
   }
