@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+
+
+enum Role {
+  Admin
+  User
+  PropertyVendor
+}
+
+model Avatars {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  public_id String
+  url       String
+  user      AmdinUser   @relation(fields: [userId], references: [id])
+  userId    String @unique @db.ObjectId
+}
+
+model AmdinUser {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String   @unique
+  // phone_number Float? @unique  ===> we can't use this line because sometime our phone number is null and then we can't compare it
+  phone_number Float?
+  address      String?
+  password     String
+  avatar       Avatars?
+  role         Role     @default(Admin)
+  isFirstSettingAdmin Boolean? 
+  isAdmin Boolean @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  // @@unique([email, phone_number], name: "unique_email_phone_number") // In this approach, a composite unique constraint (@@unique) is created on both email and phone_number. This allows phone_number to be null but enforces uniqueness when phone_number is not null.
+}
+
+model PropertyVendor {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String   @unique
+  // phone_number Float? @unique  ===> we can't use this line because sometime our phone number is null and then we can't compare it
+  phone_number Float?
+  address      String?
+  hashedPassword     String
+  avatar       String?
+  role         Role     @default(PropertyVendor)
+  isPropertyVendor Boolean @default(true)
+  isApprovedPropertyVendor Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  // @@unique([email, phone_number], name: "unique_email_phone_number") // In this approach, a composite unique constraint (@@unique) is created on both email and phone_number. This allows phone_number to be null but enforces uniqueness when phone_number is not null.
+}
+
+model User {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String   @unique
+  // phone_number Float? @unique  ===> we can't use this line because sometime our phone number is null and then we can't compare it
+  phone_number Float?
+  address      String?
+  hashedPassword     String
+  avatar       String?
+  role         Role     @default(User)
+  isUser Boolean @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  favoritedListings String[]
+  // @@unique([email, phone_number], name: "unique_email_phone_number") // In this approach, a composite unique constraint (@@unique) is created on both email and phone_number. This allows phone_number to be null but enforces uniqueness when phone_number is not null.
+
+
+accounts Account[]
+listings Listing[]
+reservations Reservation[]
+
+}
+
+model Account {
+ id           String   @id @default(auto()) @map("_id") @db.ObjectId
+ userId String @db.ObjectId
+ type String
+ provider String
+ providerAccountId String
+ refresh_token String? @db.String
+ access_token String? @db.String
+ expires_at Int?
+ token_type String?
+ scope String?
+ id_token String? @db.String
+ session_state String?
+
+ 
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+@@unique([provider, providerAccountId])
+
+
+}
+
+model Listing {
+   id           String   @id @default(auto()) @map("_id") @db.ObjectId
+   title String
+   description String
+   imageSrc String
+   createdAt DateTime @default(now())
+   category String
+   roomCount Int
+   bathroomCount Int
+   guestCount Int
+   locationValue String
+   userId String @db.ObjectId
+   price Int
+
+   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+   resevations Reservation[]
+}
+
+
+model Reservation {
+   id           String   @id @default(auto()) @map("_id") @db.ObjectId
+   authorId String @db.ObjectId
+   userId String @db.ObjectId
+   listingId String @db.ObjectId
+   startDate DateTime
+   endDate DateTime
+   totalPrice Int
+   createdAt DateTime @default(now())
+
+   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+   listing Listing @relation(fields: [listingId], references: [id], onDelete:Cascade)
+}
+
+
