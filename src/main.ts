@@ -15,6 +15,6 @@ async function bootstrap() {
   app.setBaseViewsDir(join(__dirname, '..', '/api-nestjs-server/email-templates'));
   app.setViewEngine('ejs');
   app.enableCors();
-  await app.listen(8007);
+  await app.listen(process.env.PORT || 8007);
 }
 bootstrap();
