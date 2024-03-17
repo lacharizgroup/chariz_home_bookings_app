@@ -11,11 +11,12 @@ export class ListingService {
   constructor(private prisma: PrismaService) {}
 
   /**========================================================
-   *              USERS CONCERNS                             |
+   *            AUTHENTICATED  USERS CONCERNS                |
    * @param req FOR ALL PROPERTY MANAGERS TO MANAGE LISTINGS |
    * @returns ================================================
    */
-  /***Create Listing by property manager */
+
+  /***-------------Create Listing by property manager-----------------------*/
   async createListProperty(listingDto: CreateListingDto, req: any) {
     const user = req.user;
 
@@ -58,34 +59,34 @@ export class ListingService {
   async getAllListedProperties() {
     // const user = req.user;
 
-  try {
-    const listings = await this.prisma.listing.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    try {
+      const listings = await this.prisma.listing.findMany({
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
 
-    return { listings };
-  } catch (error: any) {
-    throw new BadRequestException(error);
-  }
+      return { listings };
+    } catch (error: any) {
+      throw new BadRequestException(error);
+    }
   }
 
-  /***Get Listing by property manager */
+  /***------------------------Get Listing by property manager-----------------*/
   async getSingleListedProperty(id: string) {
     // const user = req.user;
 
-  try {
-    const listing = await this.prisma.listing.findUnique({
-      where: {
-        id: id,
-      },
-    });
+    try {
+      const listing = await this.prisma.listing.findUnique({
+        where: {
+          id: id,
+        },
+      });
 
-    return listing;
-  } catch (error: any) {
-    throw new BadRequestException(error);
-  }
+      return listing;
+    } catch (error: any) {
+      throw new BadRequestException(error);
+    }
   }
 
   /**=======================================================================
@@ -94,7 +95,7 @@ export class ListingService {
    * @returns ==============================================================
    */
 
-  /**create a resrvation */
+  /**------------------------create a resrvation--------------------------------*/
   async createReservation(reservationDto: CreateReservationDto, req: any) {
     const user = req.user;
 
@@ -117,10 +118,8 @@ export class ListingService {
     return { listingAndReservation };
   }
 
-  /**get resrvations by user or author */
+  /**-----------------get resrvations by user or author-------------------------*/
   async getReservations(reservationDto: getReservationsDto, req?: any) {
-    // const user = req.user;
-
     const { listingId, userId, authorId } = reservationDto;
     const query: any = {};
 
@@ -149,15 +148,12 @@ export class ListingService {
 
       return reservations;
     } catch (error: any) {
-      // return error;
       throw new BadRequestException(error);
     }
   }
 
-  /**get resrvations by Listing-ID */
+  /**-------------------------get resrvations by Listing-ID---------------*/
   async getReservationsByListingId(id: string, req?: any) {
-    // const user = req.user;
-
     try {
       const reservations = await this.prisma.reservation.findMany({
         where: {
@@ -173,16 +169,15 @@ export class ListingService {
 
       return reservations;
     } catch (error: any) {
-      // return error;
       throw new BadRequestException(error);
     }
   }
 
-   /**get user trips*/
-   async getUserTrips(req: any) {
+  /**------------get user trips-------------------------*/
+  async getUserTrips(req: any) {
     const user = req.user;
 
-    console.log("AUTH_USER", user)
+    console.log('AUTH_USER', user);
 
     try {
       const reservations = await this.prisma.reservation.findMany({
@@ -199,9 +194,52 @@ export class ListingService {
 
       return reservations;
     } catch (error: any) {
-      // return error; sending error here
       throw new BadRequestException(error);
     }
   }
 
+  /**--------------------get user trips-------------------------*/
+  async getUserReservationByReservationID(param: string, req: any) {
+    const user = req.user;
+
+    if (!user) {
+      throw new BadRequestException('Un-authorized user request');
+    }
+    try {
+      const reservations = await this.prisma.reservation.findUnique({
+        where: {
+          id: param,
+        },
+        include: {
+          listing: true,
+        },
+      });
+
+      return reservations;
+    } catch (error: any) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  /**--------------Cancel user trips-------------------*/
+  async userCancelReservation(param: string, req: any) {
+    const user = req.user;
+
+    if (!user) {
+      throw new BadRequestException('Un-authorized user request');
+    }
+
+    try {
+      const reservations = await this.prisma.reservation.delete({
+        where: {
+          id: param,
+          OR: [{ userId: user?.id }],
+        },
+      });
+
+      return reservations;
+    } catch (error: any) {
+      throw new BadRequestException(error);
+    }
+  }
 }
