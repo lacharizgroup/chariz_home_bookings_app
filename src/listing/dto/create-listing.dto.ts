@@ -80,12 +80,16 @@ export class CreateListingDto {
 // }
 
 
-// export class AdminForgotPasswordDto {
-
-//   @IsNotEmpty({ message: 'Email is required.' })
-//   @IsEmail({}, { message: 'Email must be valid.' })
-//   email: string;
-// }
+export class GetListingsByParams {
+  userId?: string;
+  guestCount?: number;
+  roomCount?: number;
+  bathroomCount?: number;
+  startDate?: string;
+  endDate?: string;
+  locationValue?: string;
+  category?: string
+}
 
 
 // export class AdminResetPasswordDto {

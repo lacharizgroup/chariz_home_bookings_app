@@ -10,8 +10,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 enum Role {
   Admin
   User
@@ -19,122 +17,233 @@ enum Role {
 }
 
 model Avatars {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
   public_id String
   url       String
-  user      AmdinUser   @relation(fields: [userId], references: [id])
-  userId    String @unique @db.ObjectId
+  user      AmdinUser @relation(fields: [userId], references: [id])
+  userId    String    @unique @db.ObjectId
 }
 
 model AmdinUser {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
-  email        String   @unique
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  email               String   @unique
   // phone_number Float? @unique  ===> we can't use this line because sometime our phone number is null and then we can't compare it
-  phone_number Float?
-  address      String?
-  password     String
-  avatar       Avatars?
-  role         Role     @default(Admin)
-  isFirstSettingAdmin Boolean? 
-  isAdmin Boolean @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  phone_number        Float?
+  address             String?
+  password            String
+  avatar              Avatars?
+  role                Role     @default(Admin)
+  isFirstSettingAdmin Boolean?
+  isAdmin             Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
   // @@unique([email, phone_number], name: "unique_email_phone_number") // In this approach, a composite unique constraint (@@unique) is created on both email and phone_number. This allows phone_number to be null but enforces uniqueness when phone_number is not null.
 }
 
 model PropertyVendor {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
-  email        String   @unique
+  id                       String   @id @default(auto()) @map("_id") @db.ObjectId
+  name                     String
+  email                    String   @unique
   // phone_number Float? @unique  ===> we can't use this line because sometime our phone number is null and then we can't compare it
-  phone_number Float?
-  address      String?
-  hashedPassword     String
-  avatar       String?
-  role         Role     @default(PropertyVendor)
-  isPropertyVendor Boolean @default(true)
-  isApprovedPropertyVendor Boolean @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  phone_number             Float?
+  address                  String?
+  hashedPassword           String
+  avatar                   String?
+  role                     Role     @default(PropertyVendor)
+  isPropertyVendor         Boolean  @default(true)
+  isApprovedPropertyVendor Boolean  @default(false)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
   // @@unique([email, phone_number], name: "unique_email_phone_number") // In this approach, a composite unique constraint (@@unique) is created on both email and phone_number. This allows phone_number to be null but enforces uniqueness when phone_number is not null.
 }
 
 model User {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
-  email        String   @unique
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  email             String   @unique
   // phone_number Float? @unique  ===> we can't use this line because sometime our phone number is null and then we can't compare it
-  phone_number Float?
-  address      String?
-  hashedPassword     String
-  avatar       String?
-  role         Role     @default(User)
-  isUser Boolean @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  phone_number      Float?
+  address           String?
+  hashedPassword    String
+  avatar            String?
+  role              Role     @default(User)
+  isUser            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
   favoritedListings String[]
+
+  isSuspended   Boolean        @default(false)
+  suspendedAt   DateTime?
+  isBlocked     Boolean        @default(false)
+  blockedAt     DateTime?
   // @@unique([email, phone_number], name: "unique_email_phone_number") // In this approach, a composite unique constraint (@@unique) is created on both email and phone_number. This allows phone_number to be null but enforces uniqueness when phone_number is not null.
+  profile       Profile?
+  driverProfile Driverprofile?
+  propertyVendorProfile PropertyVendorprofile?
 
+  accounts     Account[]
+  listings     Listing[]
+  reservations Reservation[]
+}
 
-accounts Account[]
-listings Listing[]
-reservations Reservation[]
+model PropertyVendorprofile {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique @db.ObjectId // relation scalar field (used in the `@relation` attribute above)
+
+  carName String?
 
 }
 
+
 model Account {
- id           String   @id @default(auto()) @map("_id") @db.ObjectId
- userId String @db.ObjectId
- type String
- provider String
- providerAccountId String
- refresh_token String? @db.String
- access_token String? @db.String
- expires_at Int?
- token_type String?
- scope String?
- id_token String? @db.String
- session_state String?
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
 
- 
-user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-@@unique([provider, providerAccountId])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
+  @@unique([provider, providerAccountId])
 }
 
 model Listing {
-   id           String   @id @default(auto()) @map("_id") @db.ObjectId
-   title String
-   description String
-   imageSrc String
-   createdAt DateTime @default(now())
-   category String
-   roomCount Int
-   bathroomCount Int
-   guestCount Int
-   locationValue String
-   userId String @db.ObjectId
-   price Int
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  // ownerId       String   @db.ObjectId
+  title         String
+  description   String
+  imageSrc      String
+  createdAt     DateTime @default(now())
+  roomCount     Int
+  bathroomCount Int
+  guestCount    Int
+  locationValue String
+  userId        String   @db.ObjectId
+  price         Int
+  checkedAmenities String[]
 
-   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-   resevations Reservation[]
+  category   String?
+  categoryListType   CategoryListType?   @relation(fields: [categoryId], references: [id])
+  categoryId String?   @db.ObjectId
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resevations Reservation[]
 }
-
 
 model Reservation {
-   id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  //  authorId String @db.ObjectId
-   userId String @db.ObjectId
-   listingId String @db.ObjectId
-   startDate DateTime
-   endDate DateTime
-   totalPrice Int
-   createdAt DateTime @default(now())
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  authorOrOwnerId String @db.ObjectId
+  userId     String   @db.ObjectId
+  listingId  String   @db.ObjectId
+  startDate  DateTime
+  endDate    DateTime
+  totalPrice Int
+  createdAt  DateTime @default(now())
 
-   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-   listing Listing @relation(fields: [listingId], references: [id], onDelete:Cascade)
+  isPaid Boolean   @default(false)
+  PaidAt DateTime?
+  checkinDate  DateTime?
+  checkedInAt DateTime?
+  checkOutDate    DateTime?
+  checkedOutAt DateTime?
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 }
 
+model Profile {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique @db.ObjectId // relation scalar field (used in the `@relation` attribute above)
 
+  referalLink String?
+  facebook String?
+  instagram String?
+  twitter String?
+  youtube String?
+  tiktok String?
+
+  address String?
+  phone String?
+}
+
+model Driverprofile {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique @db.ObjectId // relation scalar field (used in the `@relation` attribute above)
+
+  carName String?
+  carImage String?
+
+}
+
+model CategoryListType {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  adminId String? @unique @db.ObjectId
+  categoryName String
+  image String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  listings Listing[]
+}
+
+model Amenity {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  adminId String? @unique @db.ObjectId
+  amenityName String
+  image String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // listings Listing[]
+}
+
+model ToursAndEvent {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  authorOrOwnerId String? @unique @db.ObjectId
+  tourOrEventName String
+  tourOrEventDesicription String?
+  tourOrEventImage String?
+  price         Int
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // listings Listing[]
+}
+
+model ImageGallery {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
+  imageName String
+  image String
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // listings Listing[]
+}
+
+model VideoGallery {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String? @unique @db.ObjectId
+  imageName String
+  image String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // listings Listing[]
+}

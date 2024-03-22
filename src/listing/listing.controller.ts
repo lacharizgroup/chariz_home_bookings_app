@@ -5,13 +5,16 @@ import {
   Get,
   Param,
   Post,
+  Query,
+  Req,
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { CreateListingDto } from './dto/create-listing.dto';
+import { CreateListingDto, GetListingsByParams } from './dto/create-listing.dto';
 import { UserAuthGuard } from 'src/user/guards/user-auth.guard';
 import { ListingService } from './listing.service';
 import { CreateReservationDto, getReservationsDto } from './dto/reservation.dto';
+import { query } from 'express';
 
 @Controller('listing')
 export class ListingController {
@@ -27,8 +30,13 @@ export class ListingController {
   /**===================================================================================================================== */
 
   @Get()
-  async getAllListedProperties() {
-    return await this.listingService.getAllListedProperties();
+  async getAllListedProperties(
+    // @Req() request: GetListingsByParams
+    @Query() query: GetListingsByParams
+    ) {
+
+    // console.log
+    return await this.listingService.getAllListedProperties(query);
   }
 
   @Get(':id')

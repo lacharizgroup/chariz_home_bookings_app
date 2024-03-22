@@ -51,6 +51,19 @@ export class ReservationController {
     );
   }
 
+    /***Get User trips-inview Or Liked/favorited listings */
+    @Get('/inview/user-trip/:listingid')
+    @UseGuards(UserAuthGuard)
+    async getUserTripInview(
+      @Param() params: any,
+      @Request() req: any,
+    ) {
+      return await this.listingService.getUserFavoritedListing(
+        // params.id,
+        req,
+      );
+    }
+
    /***Get User booked trips */
    @Delete('user-trip/:reservationId')
    @UseGuards(UserAuthGuard)

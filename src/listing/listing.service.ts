@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { CreateListingDto } from './dto/create-listing.dto';
+import { CreateListingDto, GetListingsByParams } from './dto/create-listing.dto';
 import {
   CreateReservationDto,
   getReservationsDto,
@@ -11,56 +11,72 @@ export class ListingService {
   constructor(private prisma: PrismaService) {}
 
   /**========================================================
-   *            AUTHENTICATED  USERS CONCERNS                |
-   * @param req FOR ALL PROPERTY MANAGERS TO MANAGE LISTINGS |
+   *             GENERAL USERS CONCERNS                      |
+   * @param req FOR ALL USERS TO GET LISTINGS STARTS         |
    * @returns ================================================
    */
-
-  /***-------------Create Listing by property manager-----------------------*/
-  async createListProperty(listingDto: CreateListingDto, req: any) {
-    const user = req.user;
-
-    const listing = await this.prisma.listing.create({
-      data: {
-        title: listingDto.title,
-        description: listingDto.description,
-        imageSrc: listingDto.imageSrc,
-        category: listingDto.category,
-        roomCount: listingDto.roomCount,
-        bathroomCount: listingDto.bathroomCount,
-        guestCount: listingDto.guestCount,
-        locationValue: listingDto.location.value,
-        price: listingDto.price,
-        userId: user.id,
-      },
-    });
-
-    return { listing };
-  }
-
-  /***Get Listing by property manager */
-  async getAllListedPropertiesByManagers(req: any) {
-    const user = req.user;
-
-    const listings = await this.prisma.listing.findMany({
-      where: {
-        userId: user?.id,
-      },
-    });
-
-    return { listings };
-  }
-
-  /**========================================================
-   *              USERS CONCERNS                             |
-   * @param req FOR ALL USERS TO GET LISTINGS                |
-   * @returns ================================================
-   */
-  async getAllListedProperties() {
+  async getAllListedProperties(request: GetListingsByParams) {
     // const user = req.user;
+    console.log("userId", request.userId)
+    console.log("location", request.locationValue)
+    console.log("searchPARAMS", request)
+    let searchParams: any = {}
+
+    if(request.userId){
+      searchParams.userId = request.userId
+    }
+
+    if(request.category){
+      searchParams.category = request.category
+    }
+
+    if(request.guestCount){
+      searchParams.guestCount = {
+        gte: +request.guestCount
+      }
+    }
+
+    if(request.roomCount){
+      searchParams.roomCount = {
+        gte: +request.roomCount
+      }
+    }
+
+    if(request.bathroomCount){
+      searchParams.bathroomCount = {
+        gte: +request.bathroomCount
+      }
+    }
+
+    if(request.locationValue){
+      searchParams.locationValue = request.locationValue
+    }
+
+    if(request.startDate && request.endDate){
+      searchParams.NOT = {
+        reservations: {
+          same: {
+            OR: [
+              {
+                endDate: {gte: request.startDate},
+                startDate: {gte: request.startDate}
+              },
+              {
+                startDate: {gte: request.endDate},
+                endDate: {gte: request.endDate}
+              },
+            ]
+          }
+        }
+      }
+    }
+
+   
+
 
     try {
       const listings = await this.prisma.listing.findMany({
+        where: searchParams,
         orderBy: {
           createdAt: 'desc',
         },
@@ -88,14 +104,69 @@ export class ListingService {
       throw new BadRequestException(error);
     }
   }
+    /**========================================================
+   *              USERS CONCERNS                             |
+   * @param req FOR ALL USERS TO GET LISTINGS ENDS           |
+   * @returns ================================================
+   */
+
+
+  /**===============================================================
+   *            AUTHENTICATED  USERS CONCERNS                       |
+   * @param req FOR ALL PROPERTY MANAGERS TO MANAGE LISTINGS  STARTS|
+   * @returns ======================================================
+   */
+
+  /***-------------Create Listing by property manager-----------------------*/
+  async createListProperty(listingDto: CreateListingDto, req: any) {
+    const user = req.user;
+
+    const listing = await this.prisma.listing.create({
+      data: {
+        title: listingDto.title,
+        description: listingDto.description,
+        imageSrc: listingDto.imageSrc,
+        category: listingDto.category,
+        roomCount: listingDto.roomCount,
+        bathroomCount: listingDto.bathroomCount,
+        guestCount: listingDto.guestCount,
+        locationValue: listingDto.location.value,
+        price: listingDto.price,
+        userId: user.id,
+      },
+    });
+
+    return { listing };
+  }
+
+  /***Get Listing by PROPERTY_MANAGER */
+  async getAllListedPropertiesByManagers(req: any) {
+    const user = req.user;
+
+    const listings = await this.prisma.listing.findMany({
+      where: {
+        userId: user?.id,
+      },
+    });
+
+    return { listings };
+  }
+
+  
+
+    /**===============================================================
+   *            AUTHENTICATED  USERS CONCERNS                       |
+   * @param req FOR ALL PROPERTY MANAGERS TO MANAGE LISTINGS  ENDS|
+   * @returns ======================================================
+   */
 
   /**=======================================================================
-   *              RESERVATION CONCERNS                                     |
-   * @param req FOR ALL LISTINGS-RESERVATIONS HANDLING                     |
+   *             AUTHENTICATED USER RESERVATION CONCERNS                   |
+   * @param req FOR ALL LISTINGS-RESERVATIONS HANDLING STARTS              |
    * @returns ==============================================================
    */
 
-  /**------------------------create a resrvation--------------------------------*/
+  /**------------------------create a resrvation by user--------------------------------*/
   async createReservation(reservationDto: CreateReservationDto, req: any) {
     const user = req.user;
 
@@ -106,6 +177,7 @@ export class ListingService {
       data: {
         resevations: {
           create: {
+            authorOrOwnerId:'iii',
             userId: user?.id,
             startDate: reservationDto.startDate,
             endDate: reservationDto.endDate,
@@ -242,4 +314,35 @@ export class ListingService {
       throw new BadRequestException(error);
     }
   }
+
+  /**--------------------get user  trips-inview Or Liked/favorited listings-------------------------*/
+  async getUserFavoritedListing( req: any) {
+    const user = req.user;
+
+    if (!user) {
+      throw new BadRequestException('Un-authorized user request');
+    }
+    try {
+      const favorites = await this.prisma.listing.findMany({
+        where: {
+          id: {
+            in:[...(user.favoritedListings || [])],
+          }
+        },
+        // include: {
+        //   listing: true,
+        // },
+      });
+
+      return favorites;
+    } catch (error: any) {
+      throw new BadRequestException(error);
+    }
+  }
 }
+
+  /**=======================================================================
+   *             AUTHENTICATED USER RESERVATION CONCERNS                   |
+   * @param req FOR ALL LISTINGS-RESERVATIONS HANDLING ENDS              |
+   * @returns ==============================================================
+   */
