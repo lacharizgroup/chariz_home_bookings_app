@@ -141,7 +141,7 @@ model Listing {
 
 model Reservation {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  authorOrOwnerId String @db.ObjectId
+  authorOrOwnerId String? @db.ObjectId
   userId     String   @db.ObjectId
   listingId  String   @db.ObjectId
   startDate  DateTime
