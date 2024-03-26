@@ -130,6 +130,7 @@ model Listing {
   userId        String   @db.ObjectId
   price         Int
   checkedAmenities String[]
+  listingAccountBalance    Int @default(0)
 
   category   String?
   categoryListType   CategoryListType?   @relation(fields: [categoryId], references: [id])

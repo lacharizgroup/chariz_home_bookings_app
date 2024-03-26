@@ -207,22 +207,35 @@ export class ListingService {
       }
     })
 
-    const listingAndReservation = await this.prisma.listing.update({
-      where: {
-        id: reservationDto.listingId,
-      },
-      data: {
-        resevations: {
-          create: {
-            authorOrOwnerId:thisListing.userId,
-            userId: user?.id,
-            startDate: reservationDto.startDate,
-            endDate: reservationDto.endDate,
-            totalPrice: reservationDto.totalPrice,
+    // const listingAndReservation = await this.prisma.listing.update
+    // const listingAndReservation = await this.prisma.listing.update({
+    //   where: {
+    //     id: reservationDto.listingId,
+    //   },
+    //   data: {
+    //     resevations: {
+    //       create: {
+    //         authorOrOwnerId:thisListing.userId,
+    //         userId: user?.id,
+    //         startDate: reservationDto.startDate,
+    //         endDate: reservationDto.endDate,
+    //         totalPrice: reservationDto.totalPrice,
             
-          },
-        },
-      },
+    //       },
+    //     },
+    //   },
+    // });
+
+    // reservationDto.
+    const listingAndReservation = await this.prisma.reservation.create({
+      data:{
+        listingId:thisListing?.id ,
+        authorOrOwnerId:thisListing?.userId,
+        userId: user?.id,
+        startDate: reservationDto.startDate,
+        endDate: reservationDto.endDate,
+        totalPrice: reservationDto.totalPrice ,
+      }
     });
 
     return { listingAndReservation };
@@ -238,6 +251,11 @@ export class ListingService {
     //     id:reservationDto.listingId
     //   }
     // })
+    const listingToUpdateAccountBalance = await this.prisma.listing.findFirst({
+      where:{
+        id: reservationPaymetDto?.listingId
+      }
+    })
 
     const paidReservation = await this.prisma.reservation.update({
       where: {
@@ -257,12 +275,14 @@ export class ListingService {
             // totalPrice: reservationDto.totalPrice,
             userId:user?.id,
             // reservationId: reserveId
-            
-            
-            
-
           },
+          
         },
+        listing:{
+          update:{
+            listingAccountBalance: listingToUpdateAccountBalance.listingAccountBalance+reservationPaymetDto?.amount
+          }
+        }
       },
     });
 
