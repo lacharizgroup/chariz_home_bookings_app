@@ -137,6 +137,31 @@ model Listing {
 
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   resevations Reservation[]
+  rooms Room[]
+}
+
+model Room {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+    title         String
+  description   String
+  imageSrc      String
+  authorOrOwnerId String? @db.ObjectId
+  // userId     String   @db.ObjectId
+  listingId  String   @db.ObjectId
+  // startDate  DateTime
+  // endDate    DateTime
+  price Int
+  createdAt  DateTime @default(now())
+
+  // isPaid Boolean   @default(false)
+  // PaidAt DateTime?
+  // checkinDate  DateTime?
+  // checkedInAt DateTime?
+  // checkOutDate    DateTime?
+  // checkedOutAt DateTime?
+
+  // user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 }
 
 model Reservation {
@@ -151,14 +176,35 @@ model Reservation {
 
   isPaid Boolean   @default(false)
   PaidAt DateTime?
-  checkinDate  DateTime?
+  isCheckIn  Boolean  @default(false)
   checkedInAt DateTime?
-  checkOutDate    DateTime?
+  isCheckOut     Boolean  @default(false)
   checkedOutAt DateTime?
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  paymentdatas Reservationpaymentmetedata[]
 }
+
+model Reservationpaymentmetedata {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  reservationId  String   @db.ObjectId 
+  userId String   @db.ObjectId // relation scalar field (used in the `@relation` attribute above)
+
+  bookingName String
+  bookingPhone String
+  bookingAddress String
+  paymentMethod String
+  bookingIngressLocation String
+
+
+  createdAt  DateTime @default(now())
+
+reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+}
+
 
 model Profile {
   id     String @id @default(auto()) @map("_id") @db.ObjectId

@@ -5,9 +5,10 @@ import { PrismaService } from 'prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { ReservationController } from './reservation.controller';
+import { VendorListingController } from './vendor-listing.controller';
 
 @Module({
-  controllers: [ListingController, ReservationController],
+  controllers: [ListingController, ReservationController, VendorListingController],
   providers: [ListingService, PrismaService, JwtService]
 })
 export class ListingModule {}

@@ -32,7 +32,7 @@ export class UserAuthGuard implements CanActivate {
     // }
 
     if (!accessToken ) {
-      throw new UnauthorizedException('Please login to access this resource!');
+      throw new UnauthorizedException('Please login to access this elevated resource!');
     }
 
     if (accessToken) {

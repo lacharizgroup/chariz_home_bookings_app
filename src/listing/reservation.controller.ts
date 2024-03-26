@@ -1,9 +1,11 @@
 import {
     BadRequestException,
+  Body,
   Controller,
   Delete,
   Get,
   Param,
+  Put,
   Req,
   Request,
   UseGuards,
@@ -20,8 +22,6 @@ export class ReservationController {
     //   return await this.listingService.getAllListedProperties();
     return 'All resrevations on the way';
   }
-
-
 
   /*********===================================================AUTHENTICATED USERS ==================================*/
   /***
@@ -64,7 +64,7 @@ export class ReservationController {
       );
     }
 
-   /***Get User booked trips */
+   /***User Cancel booked trips */
    @Delete('user-trip/:reservationId')
    @UseGuards(UserAuthGuard)
    async userCancelReservation(
@@ -78,6 +78,38 @@ export class ReservationController {
   
      return await this.listingService.getUserReservationByReservationID(
         reservationId,
+       req,
+     );
+   }
+
+
+
+    /*********===================================================AUTHENTICATED USERS ==================================*/
+  /***
+   * PAYEMT RELATED ACTIVITIES FOR AUTHENTICATED RESERVATION ACTIVITIES BY USERS
+   * ==========================================================================================================
+   */
+  /***Server action on payment for reservation  */
+
+   /***User Cancel booked trips */
+   @Put('update-on-payment/:reservationId')
+   @UseGuards(UserAuthGuard)
+   async onPaymentForReservation(
+     @Param() params: any,
+     @Body() paymentMetaData: any,
+     @Request() req: any,
+   ) {
+    const {reservationId} = params
+    console.log('UPDATE_PAYMENT_DATA', paymentMetaData)
+
+    // return
+    if(!reservationId || typeof reservationId !== 'string'){
+        throw new BadRequestException('Invalide request parameter detected')
+    }
+  
+     return await this.listingService.updateReservationOnPayment(
+        reservationId,
+        paymentMetaData,
        req,
      );
    }

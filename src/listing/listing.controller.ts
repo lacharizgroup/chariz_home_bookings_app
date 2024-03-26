@@ -23,7 +23,7 @@ export class ListingController {
   /**===================================================================================================================== */
   /**
    * ==============================================================================
-   * @param || ALL AUTHETICATED ROUTES FOR HANDLING LISTINGS BY ALL USER CONCERNS
+   * @param || ALL UN-AUTHETICATED ROUTES FOR HANDLING LISTINGS BY ALL USER CONCERNS
    * @param req ===================================================================
    * @returns
    */
@@ -44,6 +44,9 @@ export class ListingController {
     return await this.listingService.getSingleListedProperty(params.id);
   }
 
+
+
+/**|||||||||||||||||||||||||||||||||||LISTING HANDLING BY VENDORS=||||||||||||||||||||||||||||||||||||||||||||||| */
   /**===================================================================================================================== */
   /**
    * ==============================================================================
@@ -51,19 +54,17 @@ export class ListingController {
    * @param req ===================================================================
    * @returns
    */
-  /**===================================================================================================================== */
+  /**==============================================UserAuthGuard======================================================================= */
   @UseGuards(UserAuthGuard)
   @Get('managers/properties')
   async getMyListingManagers(
-    @Body() createListing: CreateListingDto,
     @Request() req: any,
   ) {
-    if (!createListing.title) {
-      throw new BadRequestException('Please fill in all fields');
-    }
-
-    return await this.listingService.createListProperty(createListing, req);
+    console.log('Entered Managers Listings find111')
+    return await this.listingService.getAllListedPropertiesByManagers(req);
   }
+
+ 
 
   /***Create a listing by property manager: (for now on users) */
   @UseGuards(UserAuthGuard)
@@ -79,6 +80,10 @@ export class ListingController {
     return await this.listingService.createListProperty(createListing, req);
   }
 
+
+
+
+  /**|||||||||||||||||||||||||||||||||||RESERVATIONS HANDLING=||||||||||||||||||||||||||||||||||||||||||||||| */
   /**=================================================================================
  *              RESERVATION CONCERNS                                     |
  * @param req FOR ALL LISTINGS-RESERVATIONS HANDLING  STARTS HERE                   |
@@ -122,11 +127,6 @@ export class ListingController {
   //  @Body() reservationDto: CreateReservationDto,
    @Request() req: any,
  ) {
-  console.log("Checking-Get-Resevations CALLS", params.id)
-  // if(!reservationDto.listingId || !reservationDto.userId || !reservationDto.authorId ){
-  //   throw new BadRequestException('getting reservations needs atleast one query parameter!');
-  // }
-
    return await this.listingService.getReservationsByListingId(params.id, req);
  }
 

@@ -88,7 +88,7 @@ export class ListingService {
     }
   }
 
-  /***------------------------Get Listing by property manager-----------------*/
+  /***------------------------Get single Listing by all user-concerns-----------------*/
   async getSingleListedProperty(id: string) {
     // const user = req.user;
 
@@ -105,12 +105,12 @@ export class ListingService {
     }
   }
     /**========================================================
-   *              USERS CONCERNS                             |
-   * @param req FOR ALL USERS TO GET LISTINGS ENDS           |
+   *                USERS CONCERNS                             |
+   * @param req   FOR ALL USERS TO GET LISTINGS ENDS           |
    * @returns ================================================
    */
 
-
+  /**|||||||||||||||||||||||||||||||||||LISTING HANDLING BY VENDORS=||||||||||||||||||||||||||||||||||||||||||||||| */
   /**===============================================================
    *            AUTHENTICATED  USERS CONCERNS                       |
    * @param req FOR ALL PROPERTY MANAGERS TO MANAGE LISTINGS  STARTS|
@@ -141,6 +141,7 @@ export class ListingService {
 
   /***Get Listing by PROPERTY_MANAGER */
   async getAllListedPropertiesByManagers(req: any) {
+    console.log('Entered Managers Listings find222')
     const user = req.user;
 
     const listings = await this.prisma.listing.findMany({
@@ -152,6 +153,30 @@ export class ListingService {
     return { listings };
   }
 
+  //Property Manager get single listing details
+  async getManagerSingleListedProperty(id: string, req: any) {
+    const user = req.user;
+    if(!user){
+      throw new BadRequestException('Bad request');
+    }
+
+    try {
+      const listing = await this.prisma.listing.findUnique({
+        where: {
+          id: id,
+        },
+        include: {
+          resevations: true,
+          // rooms: true,
+          rooms:true
+        },
+      });
+
+      return listing;
+    } catch (error: any) {
+      throw new BadRequestException(error);
+    }
+  }
   
 
     /**===============================================================
@@ -160,6 +185,12 @@ export class ListingService {
    * @returns ======================================================
    */
 
+
+
+
+
+
+    /**|||||||||||||||||||||||||||||||||||RESERVATIONS HANDLING=||||||||||||||||||||||||||||||||||||||||||||||| */
   /**=======================================================================
    *             AUTHENTICATED USER RESERVATION CONCERNS                   |
    * @param req FOR ALL LISTINGS-RESERVATIONS HANDLING STARTS              |
@@ -170,6 +201,12 @@ export class ListingService {
   async createReservation(reservationDto: CreateReservationDto, req: any) {
     const user = req.user;
 
+    const thisListing = await this.prisma.listing.findUnique({
+      where:{
+        id:reservationDto.listingId
+      }
+    })
+
     const listingAndReservation = await this.prisma.listing.update({
       where: {
         id: reservationDto.listingId,
@@ -177,11 +214,12 @@ export class ListingService {
       data: {
         resevations: {
           create: {
-            authorOrOwnerId:'iii',
+            authorOrOwnerId:thisListing.userId,
             userId: user?.id,
             startDate: reservationDto.startDate,
             endDate: reservationDto.endDate,
             totalPrice: reservationDto.totalPrice,
+            
           },
         },
       },
@@ -189,6 +227,52 @@ export class ListingService {
 
     return { listingAndReservation };
   }
+
+
+  /**------------------------update a resrvation after payment has been made--------------------------------*/
+  async updateReservationOnPayment(reserveId: string, reservationPaymetDto: any, req: any) {
+    const user = req.user;
+
+    // const thisListing = await this.prisma.listing.findUnique({
+    //   where:{
+    //     id:reservationDto.listingId
+    //   }
+    // })
+
+    const paidReservation = await this.prisma.reservation.update({
+      where: {
+        id: reserveId,
+      },
+      data: {
+        isPaid:true,
+        PaidAt: new Date(Date.now()).toISOString(),
+        paymentdatas: {
+          create: {
+            // reservationId:reservationId,
+            bookingName:reservationPaymetDto?.name as string,
+            bookingPhone: reservationPaymetDto?.phone as string,
+            bookingAddress: reservationPaymetDto?.address as string,
+            bookingIngressLocation: reservationPaymetDto?.location?.value as string,
+            paymentMethod: reservationPaymetDto?.paymentMethod,
+            // totalPrice: reservationDto.totalPrice,
+            userId:user?.id,
+            // reservationId: reserveId
+            
+            
+            
+
+          },
+        },
+      },
+    });
+
+    // ******Send mail confirming payment to new guests here*****
+
+
+
+    return { paidReservation };
+  }
+
 
   /**-----------------get resrvations by user or author-------------------------*/
   async getReservations(reservationDto: getReservationsDto, req?: any) {
@@ -345,4 +429,11 @@ export class ListingService {
    *             AUTHENTICATED USER RESERVATION CONCERNS                   |
    * @param req FOR ALL LISTINGS-RESERVATIONS HANDLING ENDS              |
    * @returns ==============================================================
+   */
+
+
+   /**=====================================================================================================================
+   *             AUTHENTICATED USER_PROFILE WITH PROPERTY VENDOR PROFILES TO MANAGE RESERVATION CONCERNS                   |
+   * @param req                   FOR ALL LISTINGS-RESERVATIONS HANDLING STARTS              |
+   * @returns =============================================================================================================
    */
